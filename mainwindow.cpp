@@ -34,19 +34,42 @@ void MainWindow::on_AcceptAnswer_clicked()
 {
     QString provided = ui->Answer->text();
     ui->Answer->setText("");
-    if(ValidateAnswer(provided))
+    if(!badAnswerMarket)
     {
-        AdjustProgressBarGood();
+        if(ValidateAnswer(provided))
+        {
+            AdjustProgressBarGood();
+            ui->log->setText("log:");
+            badAnswerMarket = false;
+            LoadNextQuestion();
+            AdjustProgressBarAll();
+        }
+        else
+        {
+            //#TODO: if answer is bad user will see valid answer and rewrite it
+            AdjustProgressBarBad();
+            badAnswer.emplace_back(currentQuestionData);
+            ui->log->setText("log:" + currentQuestionData.first);
+            badAnswerMarket = true;
+        }
+
     }
     else
     {
-        //#TODO: if answer is bad user will see valid answer and rewrite it
-        AdjustProgressBarBad();
-        badAnswer.emplace_back(currentQuestionData);
+        if(ValidateAnswer(provided))
+        {
+            ui->log->setText("log:");
+            badAnswerMarket = false;
+            LoadNextQuestion();
+            AdjustProgressBarAll();
+        }
+        else
+        {
+            ui->log->setText("log:" + currentQuestionData.first);
+            badAnswerMarket = true;
+        }
     }
 
-    LoadNextQuestion();
-    AdjustProgressBarAll();
 }
 
 void MainWindow::LoadNextQuestion()
@@ -56,17 +79,21 @@ void MainWindow::LoadNextQuestion()
         ui->AcceptAnswer->setVisible(false);
         RoundEnd();
     }
-    ++numberOfQuestion;
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distr(0, toGuess.size() - 1);
-    int toGet = distr(gen);
-    currentQuestionData = toGuess[toGet];
-    toGuess.erase(toGuess.begin() + toGet);
-    toGuess.shrink_to_fit();
+    else
+    {
+        ++numberOfQuestion;
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> distr(0, toGuess.size() - 1);
+        int toGet = distr(gen);
+        currentQuestionData = toGuess[toGet];
+        toGuess.erase(toGuess.begin() + toGet);
+        toGuess.shrink_to_fit();
 
-    ui->Question->setText(currentQuestionData.second);
-    validAnswer = currentQuestionData.first;
+        ui->Question->setText(currentQuestionData.second);
+        validAnswer = currentQuestionData.first;
+    }
+
 }
 
 bool MainWindow::ValidateAnswer(QString provided)
@@ -174,6 +201,7 @@ void MainWindow::on_NextRoundBtn_clicked()
     ui->Bad->setValue(0);
 
     ui->AcceptAnswer->setVisible(true);
+    ui->NextRoundBtn->setVisible(false);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event)

@@ -57,5 +57,7 @@ private:
     QString validAnswer;
 
     std::pair<QString,QString> currentQuestionData;
+
+    bool badAnswerMarket = false;
 };
 #endif // MAINWINDOW_H
